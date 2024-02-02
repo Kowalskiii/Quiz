@@ -8,6 +8,7 @@ data class SingleChooseProgress(override  val questionId: String, val optionId: 
 data class OpenAnswerProgress(override val questionId: String, val answer: String, val evaluation: QuizAnswerEvaluation?): QuizQuestionProgress()
 
 data class QuizProgress(
+    val quizProgressId: String,
     val employeeId: String,
     val quizId: String,
     val questionsProgress: List<QuizQuestionProgress>
