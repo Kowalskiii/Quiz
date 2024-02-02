@@ -20,9 +20,9 @@ fun main() {
 
         val answer1 = SingleChoose("firstQuestion", "В какой из нижеперечисленных стран не водятся змеи?", listOf(option11, option12, option13, option14))
         val answer2 = SingleChoose("secondQuestion", "Как до 1964 года назывался город Тольятти?", listOf(option21, option22, option23, option24))
-        val answer3 = SingleChoose("fourthQuestion", "Какой металл является самым тугоплавким на Земле?", listOf(option31, option32, option33, option34))
-        val answer4 = OpenAnswer("fifthQuestion", "В какой европейской стране голубей называют «летучими крысами»?")
-        val answer5 = OpenAnswer("sixthQuestion", "Какой напиток готовят из сушеных цветков суданской розы?")
+        val answer3 = SingleChoose("thirdQuestion", "Какой металл является самым тугоплавким на Земле?", listOf(option31, option32, option33, option34))
+        val answer4 = OpenAnswer("fourthQuestion", "В какой европейской стране голубей называют «летучими крысами»?")
+        val answer5 = OpenAnswer("fifthQuestion", "Какой напиток готовят из сушеных цветков суданской розы?")
 
         val questionList = listOf(answer1, answer2, answer3, answer4, answer5)
 
@@ -31,8 +31,8 @@ fun main() {
 
         val result = passQuiz(questionList)
 
-    for (progress in result) {
-        when (progress) {
+    result.forEach { progress ->
+            when (progress) {
             is SingleChooseProgress -> {
                 println("Вопрос: ${progress.questionId}, Ответ: ${progress.optionId}, Оценка: ${progress.score}")
             }
@@ -42,59 +42,109 @@ fun main() {
         }
     }
 
+    val quizAnswerEvaluation = getScoreResult(result, adminId)
 
+    var openAnswerIndex = 0
+
+    val updatedProgress = buildList {
+
+        result.forEach { item ->
+
+            when (item) {
+                is SingleChooseProgress -> {
+                    add(item)
+                }
+                is OpenAnswerProgress -> {
+                    val result = OpenAnswerProgress(item.questionId, item.answer, quizAnswerEvaluation.getOrNull(openAnswerIndex))
+                    add(result)
+                    openAnswerIndex++
+                }
+            }
+        }
     }
 
-    fun passQuiz(questions: List<Questions>) : MutableList<QuizQuestionProgress>{
+    updatedProgress.forEach { progress ->
+        when (progress) {
+            is SingleChooseProgress -> {
+                println("Вопрос: ${progress.questionId}, Ответ: ${progress.optionId}, Оценка: ${progress.score}")
+            }
+            is OpenAnswerProgress -> {
+                println("Вопрос: ${progress.questionId}, Ответ: ${progress.answer}, Оценка: ${progress.evaluation?.score}")
+            }
+        }
+    }
+
+}
+    fun passQuiz(questions: List<Questions>) : List<QuizQuestionProgress>{
         println("Вы настоящий эрудит, если сможете ответить верно на 4/5. Тест на эрудицию")
-        val questionProgressList: MutableList<QuizQuestionProgress> = mutableListOf()
 
-        for (question in questions) {
-            println(question.textQuestions)
+        val questionProgressList = buildList {
+            for (question in questions) {
+                println(question.textQuestions)
 
-            when (question) {
-                is SingleChoose -> {
-                    for (option in question.options) {
-                        println(option.optionAnswer)
+                when (question) {
+                    is SingleChoose -> {
+                        for (option in question.options) {
+                            println(option.optionAnswer)
+                        }
+                        print("Ваш ответ:")
+                        readlnOrNull()?.let { answer ->
+                            val singleChooseList =
+                                getSingleChooseProgress(question.questionId, question.options, answer)
+                            addAll(singleChooseList)
+                        }
                     }
-                    print("Ваш ответ:")
-                    val answer = readln()
-                        val singleChooseList = getSingleChooseProgress(question.questionId, question.options, answer)
-                        questionProgressList.addAll(singleChooseList)
-
-                }
-                is OpenAnswer -> {
-                    print("Ваш ответ:")
-                    val answer = readln()
-                    if (answer != null) {
-                        val openAnswer = getOpenAnswerProgress(question.questionId, answer, null)
-                        questionProgressList.add(openAnswer)
+                    is OpenAnswer -> {
+                        print("Ваш ответ:")
+                        readlnOrNull()?.let { answer ->
+                            val openAnswer = getOpenAnswerProgress(question.questionId, answer, null)
+                            add(openAnswer)
+                        }
                     }
                 }
             }
-
         }
-
         return questionProgressList
     }
 
     fun getSingleChooseProgress(questionId: String, options: List<Option>, answer: String): List<QuizQuestionProgress> {
         val answerList: List<String> = answer.split(",").map { it.trim() }
-        val singleChooseList: MutableList<QuizQuestionProgress> = mutableListOf()
 
-        for (answer in answerList) {
-            val option = options.find { it.optionAnswer == answer }
-            if (option != null) {
-                val singleChooseProgress = SingleChooseProgress(questionId, option.optionId, option.score)
-                singleChooseList.add(singleChooseProgress)
+        val singleChooseList = buildList {
+            for (answer in answerList) {
+                val option = options.find { it.optionAnswer == answer }
+                if (option != null) {
+                    val singleChooseProgress = SingleChooseProgress(questionId, option.optionId, option.score)
+                    add(singleChooseProgress)
+                }
             }
         }
-
         return singleChooseList
     }
 
     fun getOpenAnswerProgress(questionId: String, answer: String, evaluation: QuizAnswerEvaluation? ): QuizQuestionProgress {
         return OpenAnswerProgress(questionId, answer, evaluation)
     }
+
+    fun getScoreResult(resultList: List<QuizQuestionProgress>, adminId: String) : List<QuizAnswerEvaluation>{
+
+        val adminToScoreOpenAnswer = buildList {
+            resultList.forEach { item ->
+                if (item is OpenAnswerProgress) {
+                    println("\nОцените ответ на вопрос по 5б шкале")
+                    println("Вопрос: ${item.questionId}, Ответ: ${item.answer}")
+
+                    readlnOrNull()?.let { adminScore ->
+                        val quizAnswerEvaluation = QuizAnswerEvaluation(adminId, adminScore.toInt())
+                        add(quizAnswerEvaluation)
+                    }
+                }
+            }
+
+        }
+        return adminToScoreOpenAnswer
+    }
+
+
 
 
