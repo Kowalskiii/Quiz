@@ -2,7 +2,6 @@
 fun main() {
     val employeeId =  "kowalski"
     val adminId = "admin"
-
     val quizId = "polymath"
     val option11 = Option("1.1", "Финляндия", 5)
     val option12 = Option("1.2", "Франция", 0)
