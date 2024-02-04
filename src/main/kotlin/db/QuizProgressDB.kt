@@ -1,5 +1,4 @@
 package db
-
 import QuizProgress
 import java.lang.RuntimeException
 

@@ -1,5 +1,4 @@
 package db
-
 import Quiz
 import java.lang.RuntimeException
 
